@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | ProShop</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f4f8; padding: 24px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .login-container { max-width: 400px; margin: 100px auto; background: white; border-radius: 28px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .login-container input { width: 100%; padding: 14px; margin: 12px 0; border: 1px solid #cbd5e1; border-radius: 16px; }
+        .login-container button { background: #1a1a2e; color: white; border: none; padding: 14px; border-radius: 50px; width: 100%; font-weight: 600; cursor: pointer; }
+        .remember-me { display: flex; align-items: center; gap: 8px; margin: 12px 0; justify-content: center; }
+        .remember-me input { width: 18px; height: 18px; margin: 0; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+        .card { background: white; border-radius: 28px; padding: 28px; margin-bottom: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        h2 { margin-bottom: 24px; color: #1a1a2e; border-left: 4px solid #e94560; padding-left: 16px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; margin-bottom: 24px; }
+        input, textarea, select { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 16px; font-size: 0.95rem; }
+        button { background: #1a1a2e; color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; font-weight: 600; margin: 4px; transition: 0.2s; }
+        button:hover { background: #e94560; transform: scale(0.97); }
+        button.danger { background: #dc2626; }
+        button.danger:hover { background: #b91c1c; }
+        button.success { background: #10b981; }
+        button.warning { background: #f59e0b; }
+        button.warning:hover { background: #d97706; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; display: block; overflow-x: auto; }
+        th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+        th { background: #f8fafc; font-weight: 700; }
+        .category-item { display: flex; align-items: center; gap: 15px; background: #f8fafc; padding: 12px 20px; margin: 8px 0; border-radius: 16px; transition: all 0.2s; }
+        .category-item.fixed-category { background: #e2e8f0; border-left: 4px solid #e94560; cursor: default; }
+        .category-item.pinned-category { background: #fef3c7; border-left: 4px solid #f59e0b; }
+        .drag-handle { cursor: grab; font-size: 1.2rem; color: #64748b; }
+        .pin-icon { cursor: pointer; font-size: 1.1rem; transition: 0.2s; }
+        .pin-icon:hover { transform: scale(1.1); }
+        .order-controls { display: flex; gap: 8px; margin-left: auto; align-items: center; }
+        .search-box { padding: 10px 16px; border-radius: 40px; border: 1px solid #cbd5e1; width: 250px; }
+        .toggle-switch { width: 60px; height: 30px; background: #cbd5e1; border-radius: 30px; display: inline-block; position: relative; cursor: pointer; }
+        .toggle-switch.active { background: #1a1a2e; }
+        .toggle-switch:after { content: ""; width: 26px; height: 26px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 3px; transition: 0.2s; }
+        .toggle-switch.active:after { transform: translateX(28px); }
+        .nav-tabs { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+        .tab-btn { background: #e2e8f0; color: #1a1a2e; }
+        .tab-btn.active { background: #1a1a2e; color: white; }
+        .search-section { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .info-note { margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 16px; color: #92400e; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-container">
+    <h2 style="border: none; margin-bottom: 30px;">🔐 Admin Login</h2>
+    <input type="password" id="adminPassword" placeholder="Enter Password">
+    <div class="remember-me"><input type="checkbox" id="rememberPassword"><label for="rememberPassword">Remember Password</label></div>
+    <button onclick="checkLogin()">Login</button>
+    <p style="margin-top: 20px; color: #64748b;">: <strong></strong></p>
+</div>
+
+<div id="adminPanel" style="display: none;">
+    <div class="container">
+        <div class="admin-header">
+            <h1>🔐 Admin Dashboard</h1>
+            <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                <span><strong>Order Status:</strong></span>
+                <div id="orderToggle" class="toggle-switch active" onclick="toggleOrderStatus()"></div>
+                <span id="orderStatusText">Active</span>
+                <button class="danger" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="showTab('settings')">⚙️ Settings</button>
+            <button class="tab-btn" onclick="showTab('categories')">🏷️ Categories</button>
+            <button class="tab-btn" onclick="showTab('products')">📦 Products</button>
+            <button class="tab-btn" onclick="showTab('orders')">📋 Orders</button>
+            <button class="tab-btn" onclick="showTab('cancel')">🔄 Cancel Order</button>
+        </div>
+
+        <div id="tabSettings" class="card">
+            <h2>⚙️ Site Settings</h2>
+            <div class="form-grid">
+                <input type="text" id="adminSiteName" placeholder="Site Name">
+                <input type="text" id="adminLogoIcon" placeholder="Logo Text">
+                <input type="text" id="adminLogoUrl" placeholder="Logo Image URL">
+                <input type="text" id="adminBannerTitle" placeholder="Banner Title">
+                <input type="text" id="adminBannerText" placeholder="Banner Text">
+            </div>
+            <button onclick="saveSettings()">💾 Save Settings</button>
+        </div>
+
+        <div id="tabCategories" class="card" style="display: none;">
+            <h2>🏷️ Manage Categories</h2>
+            <div class="form-grid">
+                <input type="text" id="newCatName" placeholder="Category Name">
+                <input type="text" id="newCatIcon" placeholder="Icon (emoji)">
+                <input type="text" id="newCatId" placeholder="ID (e.g., electronics)">
+                <button onclick="addCategory()">➕ Add Category</button>
+            </div>
+            <div id="categoriesList"></div>
+            <div class="info-note">📌 <strong>All Products</strong> is fixed at top. Click 📌 to pin/unpin any category. Pinned categories appear right after "All Products".</div>
+        </div>
+
+        <div id="tabProducts" class="card" style="display: none;">
+            <h2>➕ Add New Product</h2>
+            <div class="form-grid">
+                <input type="text" id="prodName" placeholder="Product Name *">
+                <input type="number" id="prodPrice" placeholder="Price *">
+                <input type="text" id="prodImage" placeholder="Image URL *">
+                <input type="number" id="prodStock" placeholder="Stock">
+                <select id="prodCategory"><option value="">Select Category</option></select>
+                <input type="text" id="prodWarranty" placeholder="Warranty">
+                <textarea id="prodDesc" placeholder="Description" rows="2"></textarea>
+            </div>
+            <button onclick="addProduct()">➕ Add Product</button>
+            <h2 style="margin-top: 40px;">📦 All Products</h2>
+            <div class="search-section"><input type="text" id="productSearch" class="search-box" placeholder="🔍 Search products..."><button onclick="searchProducts()">Search</button><button onclick="downloadProductsExcel()">📥 Export Products</button></div>
+            <div id="productsList"></div>
+        </div>
+
+        <div id="tabOrders" class="card" style="display: none;">
+            <h2>📋 Orders Management</h2>
+            <div class="search-section"><input type="text" id="orderSearch" class="search-box" placeholder="🔍 Search orders..."><button onclick="searchOrders()">Search</button><button onclick="downloadOrdersExcel()">📥 Export Orders</button></div>
+            <div id="ordersList"></div>
+        </div>
+
+        <div id="tabCancel" class="card" style="display: none;">
+            <h2>🔄 Cancel Order & Restore Stock</h2>
+            <div class="form-grid"><input type="text" id="cancelOrderId" placeholder="Order ID or Invoice No"><button class="danger" onclick="cancelOrder()">❌ Cancel Order & Restore Stock</button></div>
+            <p style="margin-top: 12px; color: #64748b;">💡 When cancelled, product stocks will be automatically restored.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let siteSettings = {}, products = [], orders = [], categories = [], orderActive = true, dragSourceId = null;
+    const FIXED_ALL = { id: "all", name: "All Products", icon: "🎯", active: true, order: 0, isFixed: true, pinned: false };
+
+    window.onload = () => { let p = localStorage.getItem("admin_password"); if(p){ document.getElementById("adminPassword").value = p; document.getElementById("rememberPassword").checked = true; } };
+    function checkLogin() { let pwd = document.getElementById("adminPassword").value; if(pwd === "admin123"){ if(document.getElementById("rememberPassword").checked) localStorage.setItem("admin_password", pwd); else localStorage.removeItem("admin_password"); document.getElementById("loginScreen").style.display = "none"; document.getElementById("adminPanel").style.display = "block"; loadAdminData(); } else alert("Wrong password! Use: RAIHAN"); }
+    function logout() { document.getElementById("loginScreen").style.display = "block"; document.getElementById("adminPanel").style.display = "none"; document.getElementById("adminPassword").value = ""; }
+    function showTab(tab) { ["Settings","Categories","Products","Orders","Cancel"].forEach(t => document.getElementById(`tab${t}`).style.display = "none"); document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).style.display = "block"; document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active")); event.target.classList.add("active"); }
+
+    function loadAdminData() {
+        siteSettings = JSON.parse(localStorage.getItem("proshop_settings") || '{"siteName":"ProShop","logoIcon":"P","logoUrl":"","bannerTitle":"Best Products","bannerText":"Technology"}');
+        products = JSON.parse(localStorage.getItem("proshop_products") || '[]');
+        orders = JSON.parse(localStorage.getItem("proshop_orders") || '[]');
+        let saved = JSON.parse(localStorage.getItem("proshop_categories") || '[]');
+        categories = saved;
+        document.getElementById("adminSiteName").value = siteSettings.siteName;
+        document.getElementById("adminLogoIcon").value = siteSettings.logoIcon || "";
+        document.getElementById("adminLogoUrl").value = siteSettings.logoUrl || "";
+        document.getElementById("adminBannerTitle").value = siteSettings.bannerTitle;
+        document.getElementById("adminBannerText").value = siteSettings.bannerText;
+        renderCategoriesList(); renderCategorySelect(); renderProductsList(); renderOrdersList(); loadOrderStatus();
+    }
+
+    function renderCategoriesList() {
+        let container = document.getElementById("categoriesList");
+        let allCat = { ...FIXED_ALL };
+        let otherCats = categories.filter(c => c.id !== "all");
+        let pinnedCats = otherCats.filter(c => c.pinned === true);
+        let unpinnedCats = otherCats.filter(c => c.pinned !== true);
+        let sorted = [allCat, ...pinnedCats, ...unpinnedCats];
+        
+        container.innerHTML = '';
+        sorted.forEach((cat, idx) => {
+            let isFixed = cat.id === "all";
+            let isPinned = cat.pinned === true && !isFixed;
+            let div = document.createElement('div');
+            div.className = `category-item ${isFixed ? 'fixed-category' : ''} ${isPinned ? 'pinned-category' : ''}`;
+            div.setAttribute('data-id', cat.id);
+            if(!isFixed) div.setAttribute('draggable', 'true');
+            div.innerHTML = `
+                <span class="drag-handle" style="${isFixed ? 'opacity:0.5;' : ''}">⋮⋮</span>
+                <span>${cat.icon}</span>
+                <span><strong>${cat.name}</strong> ${isFixed ? '<span style="color:#e94560;font-size:11px;">(Fixed - Always First)</span>' : `(${cat.id})`}</span>
+                ${!isFixed ? `
+                    <span class="pin-icon" onclick="togglePin('${cat.id}')" title="${isPinned ? 'Unpin' : 'Pin this category'}">
+                        ${isPinned ? '📌 Pinned' : '📍 Pin'}
+                    </span>
+                ` : ''}
+                <div class="order-controls">
+                    ${!isFixed ? `
+                        <button onclick="moveCategory('${cat.id}','up')" ${idx===1 && pinnedCats.length===0 ? 'disabled' : ''}>↑</button>
+                        <button onclick="moveCategory('${cat.id}','down')" ${idx===sorted.length-1 ? 'disabled' : ''}>↓</button>
+                        <button onclick="editCategory('${cat.id}')">✏️</button>
+                        <button class="danger" onclick="deleteCategory('${cat.id}')">🗑</button>
+                    ` : '<span style="color:#94a3b8;">Cannot move/delete</span>'}
+                </div>
+            `;
+            if(!isFixed){ 
+                div.addEventListener('dragstart', e=>{ dragSourceId = e.target.closest('.category-item').getAttribute('data-id'); e.dataTransfer.effectAllowed='move'; }); 
+                div.addEventListener('dragover', e=>e.preventDefault()); 
+                div.addEventListener('drop', e=>{ e.preventDefault(); let target = e.target.closest('.category-item'); if(target && dragSourceId && dragSourceId!==target.getAttribute('data-id') && dragSourceId!=="all") reorderCategories(dragSourceId, target.getAttribute('data-id')); }); 
+            }
+            container.appendChild(div);
+        });
+    }
+
+    function togglePin(catId) {
+        let cat = categories.find(c => c.id === catId);
+        if(cat && cat.id !== "all") {
+            cat.pinned = !cat.pinned;
+            localStorage.setItem("proshop_categories", JSON.stringify(categories));
+            renderCategoriesList();
+            renderCategorySelect();
+        }
+    }
+
+    function reorderCategories(src, tgt){
+        let otherCats = categories.filter(c => c.id !== "all");
+        let srcIdx = otherCats.findIndex(c=>c.id===src);
+        let tgtIdx = otherCats.findIndex(c=>c.id===tgt);
+        if(srcIdx===-1 || tgtIdx===-1) return;
+        let [moved] = otherCats.splice(srcIdx,1);
+        otherCats.splice(tgtIdx,0,moved);
+        categories = otherCats;
+        localStorage.setItem("proshop_categories", JSON.stringify(categories));
+        renderCategoriesList(); renderCategorySelect();
+    }
+
+    function moveCategory(id, dir){
+        let otherCats = categories.filter(c => c.id !== "all");
+        let idx = otherCats.findIndex(c=>c.id===id);
+        if(dir==='up' && idx>0) [otherCats[idx-1], otherCats[idx]] = [otherCats[idx], otherCats[idx-1]];
+        else if(dir==='down' && idx<otherCats.length-1) [otherCats[idx], otherCats[idx+1]] = [otherCats[idx+1], otherCats[idx]];
+        else return;
+        categories = otherCats;
+        localStorage.setItem("proshop_categories", JSON.stringify(categories));
+        renderCategoriesList(); renderCategorySelect();
+    }
+
+    function renderCategorySelect() { 
+        let select = document.getElementById("prodCategory"); 
+        select.innerHTML = '<option value="">Select Category</option>' + categories.filter(c=>c.id!=="all").map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join(''); 
+    }
+
+    function addCategory() { 
+        let name=document.getElementById("newCatName").value.trim(), icon=document.getElementById("newCatIcon").value.trim(), id=document.getElementById("newCatId").value.trim().toLowerCase().replace(/\s+/g,'-'); 
+        if(!name||!icon||!id){ alert("Fill all fields!"); return; } 
+        categories.push({id,name,icon,active:true,pinned:false}); 
+        localStorage.setItem("proshop_categories",JSON.stringify(categories)); 
+        renderCategoriesList(); renderCategorySelect(); 
+        document.getElementById("newCatName").value=""; document.getElementById("newCatIcon").value=""; document.getElementById("newCatId").value=""; 
+        alert("Category added!"); 
+    }
+
+    function editCategory(id){ 
+        if(id==="all"){ alert("Cannot edit All Products!"); return; } 
+        let cat = categories.find(c=>c.id===id); 
+        if(!cat) return; 
+        let n=prompt("New name:",cat.name); if(n) cat.name=n; 
+        let i=prompt("New icon:",cat.icon); if(i) cat.icon=i; 
+        localStorage.setItem("proshop_categories",JSON.stringify(categories)); 
+        renderCategoriesList(); renderCategorySelect(); 
+    }
+
+    function deleteCategory(id){ 
+        if(id==="all"){ alert("Cannot delete All Products!"); return; } 
+        if(confirm("Delete this category?")){ 
+            categories = categories.filter(c=>c.id!==id); 
+            localStorage.setItem("proshop_categories",JSON.stringify(categories)); 
+            renderCategoriesList(); renderCategorySelect(); 
+        } 
+    }
+
+    function saveSettings(){ siteSettings.siteName=document.getElementById("adminSiteName").value; siteSettings.logoIcon=document.getElementById("adminLogoIcon").value; siteSettings.logoUrl=document.getElementById("adminLogoUrl").value; siteSettings.bannerTitle=document.getElementById("adminBannerTitle").value; siteSettings.bannerText=document.getElementById("adminBannerText").value; localStorage.setItem("proshop_settings",JSON.stringify(siteSettings)); alert("Settings saved!"); }
+    let productSearch=""; function searchProducts(){ productSearch=document.getElementById("productSearch").value.toLowerCase(); renderProductsList(); }
+    function addProduct(){ let name=document.getElementById("prodName").value.trim(), price=parseFloat(document.getElementById("prodPrice").value), img=document.getElementById("prodImage").value.trim(), stock=parseInt(document.getElementById("prodStock").value)||0, cat=document.getElementById("prodCategory").value, war=document.getElementById("prodWarranty").value.trim(), desc=document.getElementById("prodDesc").value.trim(); if(!name||!price||!img||!cat){ alert("Fill required fields!"); return; } let np={id:"p"+Date.now(),name,price,image:img,stock,category:cat,warranty:war,description:desc,createdAt:new Date().toLocaleString()}; products.push(np); localStorage.setItem("proshop_products",JSON.stringify(products)); renderProductsList(); document.getElementById("prodName").value=""; document.getElementById("prodPrice").value=""; document.getElementById("prodImage").value=""; document.getElementById("prodStock").value=""; document.getElementById("prodCategory").value=""; document.getElementById("prodWarranty").value=""; document.getElementById("prodDesc").value=""; alert("Product added!"); }
+    function editProduct(id){ let p=products.find(p=>p.id===id); if(!p) return; let n=prompt("Name:",p.name); if(n) p.name=n; let pr=prompt("Price:",p.price); if(pr) p.price=parseFloat(pr); let s=prompt("Stock:",p.stock); if(s!==null) p.stock=parseInt(s); let c=prompt("Category ID:",p.category); if(c) p.category=c; localStorage.setItem("proshop_products",JSON.stringify(products)); renderProductsList(); alert("Updated!"); }
+    function deleteProduct(id){ if(confirm("Delete?")){ products=products.filter(p=>p.id!==id); localStorage.setItem("proshop_products",JSON.stringify(products)); renderProductsList(); } }
+    function renderProductsList(){ let container=document.getElementById("productsList"); let filtered=products; if(productSearch) filtered=filtered.filter(p=>p.name.toLowerCase().includes(productSearch)); if(filtered.length===0){ container.innerHTML="<p>No products.</p>"; return; } container.innerHTML=`<table><thead><tr><th>Name</th><th>Price</th><th>Stock</th><th>Category</th><th>Actions</th></tr></thead><tbody>${filtered.map(p=>`<tr><td>${p.name}</td><td>$${p.price}</td><td>${p.stock}</td><td>${p.category||'N/A'}</td><td><button onclick="editProduct('${p.id}')">✏️</button><button class="danger" onclick="deleteProduct('${p.id}')">🗑</button></td></tr>`).join('')}</tbody></table>`; }
+    let orderSearch=""; function searchOrders(){ orderSearch=document.getElementById("orderSearch").value.toLowerCase(); renderOrdersList(); }
+    function editOrder(id,field,val){ let n=prompt(`Edit ${field}:`,val); if(n&&n.trim()){ let o=orders.find(o=>o.id==id); if(o){ if(field==='name') o.customerName=n.trim(); if(field==='phone') o.phone=n.trim(); if(field==='address') o.address=n.trim(); localStorage.setItem("proshop_orders",JSON.stringify(orders)); renderOrdersList(); alert("Updated!"); } } }
+    function updateOrderStatus(id,status){ let o=orders.find(o=>o.id==id); if(o){ o.status=status; localStorage.setItem("proshop_orders",JSON.stringify(orders)); renderOrdersList(); } }
+    function deleteOrder(id){ if(confirm("Delete?")){ orders=orders.filter(o=>o.id!=id); localStorage.setItem("proshop_orders",JSON.stringify(orders)); renderOrdersList(); alert("Deleted!"); } }
+    function cancelOrder(){ let term=document.getElementById("cancelOrderId").value.trim(); if(!term){ alert("Enter ID or Invoice"); return; } let order=orders.find(o=>o.id==term||o.invoiceNo===term); if(!order){ alert("Not found"); return; } if(confirm(`Cancel order for ${order.customerName}? Stock will restore.`)){ order.items.forEach(it=>{ let p=products.find(p=>p.id===it.id); if(p) p.stock+=it.quantity; }); orders=orders.filter(o=>o.id!==order.id); localStorage.setItem("proshop_products",JSON.stringify(products)); localStorage.setItem("proshop_orders",JSON.stringify(orders)); renderProductsList(); renderOrdersList(); document.getElementById("cancelOrderId").value=""; alert("Cancelled! Stock restored."); } }
+    function renderOrdersList(){ let container=document.getElementById("ordersList"); let filtered=orders; if(orderSearch) filtered=filtered.filter(o=>o.customerName.toLowerCase().includes(orderSearch)||o.phone.includes(orderSearch)||(o.invoiceNo&&o.invoiceNo.toLowerCase().includes(orderSearch))); if(filtered.length===0){ container.innerHTML="<p>No orders.</p>"; return; } let html=`<table><thead><tr><th>Invoice</th><th>Date</th><th>Name</th><th>Phone</th><th>Address</th><th>Products</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody>`; filtered.forEach(o=>{ let items=o.items.map(i=>`${i.name} x${i.quantity}`).join(", "); html+=`<tr><td>${o.invoiceNo||'N/A'}</td><td>${o.date||'N/A'}</td><td>${o.customerName}<br><small><button onclick="editOrder(${o.id},'name','${o.customerName}')">✏️</button></small></td><td>${o.phone}<br><small><button onclick="editOrder(${o.id},'phone','${o.phone}')">✏️</button></small></td><td>${o.address.substring(0,40)}...<br><small><button onclick="editOrder(${o.id},'address','${o.address.replace(/'/g,"\\'")}')">✏️</button></small></td><td>${items}</td><td>$${o.total}</td><td><select onchange="updateOrderStatus(${o.id},this.value)"><option ${o.status==='Pending'?'selected':''}>Pending</option><option ${o.status==='Completed'?'selected':''}>Completed</option><option ${o.status==='Shipped'?'selected':''}>Shipped</option></select></td><td><button class="danger" onclick="deleteOrder(${o.id})">🗑</button></td></tr>`; }); html+=`</tbody></table>`; container.innerHTML=html; }
+    function downloadProductsExcel(){ let csv="ID,Name,Price,Stock,Category,Warranty,Description,Created\n"; products.forEach(p=>{ csv+=`"${p.id}","${p.name}",${p.price},${p.stock},"${p.category||''}","${p.warranty||''}","${p.description||''}","${p.createdAt||''}"\n`; }); downloadCSV(csv,"products.csv"); }
+    function downloadOrdersExcel(){ let csv="Invoice,Date,Name,Phone,Address,Products,Total,Status\n"; orders.forEach(o=>{ let items=o.items.map(i=>`${i.name} x${i.quantity}`).join(" | "); csv+=`"${o.invoiceNo||''}","${o.date}","${o.customerName}","${o.phone}","${o.address}","${items}",${o.total},"${o.status}"\n`; }); downloadCSV(csv,"orders.csv"); }
+    function downloadCSV(csv,fn){ let blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=fn; a.click(); URL.revokeObjectURL(a.href); }
+    function toggleOrderStatus(){ orderActive=!orderActive; let t=document.getElementById("orderToggle"), s=document.getElementById("orderStatusText"); if(orderActive){ t.classList.add("active"); s.innerText="Active"; } else { t.classList.remove("active"); s.innerText="Inactive"; } localStorage.setItem("proshop_order_status",JSON.stringify(orderActive)); alert(`Order status: ${orderActive?"ACTIVE":"INACTIVE"}`); }
+    function loadOrderStatus(){ let s=localStorage.getItem("proshop_order_status"); if(s!==null) orderActive=JSON.parse(s); let t=document.getElementById("orderToggle"), st=document.getElementById("orderStatusText"); if(orderActive){ t.classList.add("active"); st.innerText="Active"; } else { t.classList.remove("active"); st.innerText="Inactive"; } }
+</script>
+</body>
+</html>
