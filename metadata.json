@@ -1,0 +1,6 @@
+{
+  "name": "দক্ষতা পথ",
+  "description": "বাংলাদেশে ১০০০+ চাহিদাসম্পন্ন কোর্সের সম্পূর্ণ তালিকা ও এনরোলমেন্ট পোর্টাল",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
